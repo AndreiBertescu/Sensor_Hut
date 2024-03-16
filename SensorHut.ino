@@ -16,6 +16,8 @@
 #define CLOCK_CLOCK A1
 #define CLOCK_DATA A2
 #define BATTERY_SENSOR A3
+#define BUTTON1 3
+#define BUTTON2 2
 
 #define CLOCK_RESET 4
 #define BUZZER 5
@@ -25,8 +27,8 @@
 #define TFT_RST 10
 #define SWITCH 12
 
-#define ON_TIME 1000
-#define OFF_TIME 2000
+#define ON_TIME 1 * 1000  //not used
+#define OFF_TIME 30 * 1000
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
 DFRobot_DHT11 DHT;
@@ -35,7 +37,7 @@ ThreeWire myWire(CLOCK_DATA, CLOCK_CLOCK, CLOCK_RESET);
 RtcDS1302<ThreeWire> rtc(myWire);
 Adafruit_ST7789 tft = Adafruit_ST7789(-1, TFT_DC, TFT_RST);
 
-float battery;
+uint8_t battery;
 uint16_t lightData;
 bool gasDanger;
 uint8_t temperature;
@@ -46,13 +48,22 @@ uint16_t year;
 uint8_t second;
 uint8_t minute;
 uint8_t hour;
+unsigned long ellapsedTime;
+bool update, buzzerTone;
 
 void setup() {
-  Serial.begin(9600);
+  // Serial.begin(9600);
+  update = true;
+  buzzerTone = false;
+  ellapsedTime = 0;
 
   //light sensor & battery
   pinMode(LIGHT_SENSOR, INPUT);
   pinMode(BATTERY_SENSOR, INPUT);
+
+  //buttons init
+  pinMode(BUTTON1, INPUT_PULLUP);
+  pinMode(BUTTON2, INPUT_PULLUP);
 
   //power enable
   pinMode(SWITCH, OUTPUT);
@@ -61,7 +72,7 @@ void setup() {
 
   //clock
   rtc.Begin();
-  setClock();
+  // setClock();
 
   //lcd
   tft.init(240, 240, SPI_MODE2);
@@ -69,33 +80,50 @@ void setup() {
 }
 
 void loop() {
-  //gas warning
-  // if (gasData == 1)
-  //   buzzerWarning();
+  if (millis() - ellapsedTime >= OFF_TIME) {
+    ellapsedTime = millis();
+    update = true;
+  }
 
-  //sensors read
-  batterySensor(battery);
-  lightSensor(lightData);
-  // mq9(gasDanger);
-  dhtSensor(temperature, humidity);
-  clockModule(day, month, year, second, minute, hour);
-  // bmp280();
+  if (!update && !digitalRead(BUTTON2)) {
+    update = true;
+    tone(BUZZER, 1000);
+    delay(60);
+    noTone(BUZZER);
+  }
+  if (!buzzerTone && !digitalRead(BUTTON1))
+    buzzerTone = true;
 
-  //lcd output
-  lcd();
-  showValues();
+  if (buzzerTone)
+    buzzer();
 
-  Serial.print("\n");
-  delay(ON_TIME);
+  if (update) {
+    updateSensors();
+    updateLcd();
+    // printValues();
+
+    update = false;
+  }
+
+  delay(100);
 }
 
-void batterySensor(float& battery) {
-  if(analogRead(BATTERY_SENSOR) > 1024){
+void updateSensors() {
+  batterySensor(battery);
+  lightSensor(lightData);
+  dhtSensor(temperature, humidity);
+  clockModule(day, month, year, second, minute, hour);
+  // mq9(gasDanger);
+  // bmp280();
+}
+
+void batterySensor(uint8_t& battery) {
+  if (analogRead(BATTERY_SENSOR) > 1024) {
     battery = 0;
     return;
   }
 
-  battery = map(analogRead(BATTERY_SENSOR), 0, 1024, 0, 5);
+  battery = int((float)map(analogRead(BATTERY_SENSOR), 0, 1024, 0, 5) * 10);
 }
 
 void lightSensor(uint16_t& lightData) {
@@ -104,7 +132,7 @@ void lightSensor(uint16_t& lightData) {
 
 void dhtSensor(uint8_t& temperature, uint8_t& humidity) {
   DHT.read(DHT_SENSOR);
-  
+
   temperature = DHT.temperature;
   humidity = DHT.humidity;
 }
@@ -125,6 +153,10 @@ void setClock() {
   rtc.SetDateTime(compiled);
 }
 
+void mq9(bool gasDanger) {
+  gasDanger = !digitalRead(MQ9_SENSOR);
+}
+
 void bmp280() {
   Serial.print("--- Temperature  = ");
   Serial.print(bmp.readTemperature());
@@ -139,22 +171,7 @@ void bmp280() {
   Serial.println("  m ");                   //If you don't know it, modify it until you get your current  altitude
 }
 
-void mq9(bool gasDanger) {
-  gasDanger = !digitalRead(MQ9_SENSOR);
-}
-
-void buzzerWarning() {
-  tone(BUZZER, 3000);
-  delay(1000);
-
-  tone(BUZZER, 2000);
-  delay(1000);
-
-  noTone(BUZZER);
-  delay(500);
-}
-
-void lcd() {
+void updateLcd() {
   char str[20];
 
   tft.setTextWrap(false);
@@ -165,8 +182,7 @@ void lcd() {
 
   //battery
   tft.setCursor(182, 10);
-  dtostrf(battery, 3, 1, str);
-  sprintf(str, "%sv", str);
+  sprintf(str, "%d.%dv", battery / 10 % 10, battery % 10);
   tft.print(str);
 
   //date
@@ -191,21 +207,19 @@ void lcd() {
   tft.print(str);
 
   tft.setCursor(10, 200);
-  if (lightData < 100)
+  if (lightData < 200)
     tft.print("Brgt:Dark");
-  else if (lightData < 300)
+  else if (lightData < 500)
     tft.print("Brgt:Dim");
   else
     tft.print("Brgt:Bright");
 }
 
-void showValues() {
+void printValues() {
   char str[60];
   Serial.println();
 
-  Serial.print("Battery voltage: ");
-  Serial.print(battery);
-  sprintf(str, "v  Battery reading: %u", analogRead(BATTERY_SENSOR));
+  sprintf(str, "Battery voltage: %u.%uv  Battery reading: %u", battery / 10 % 10, battery % 10, analogRead(BATTERY_SENSOR));
   Serial.println(str);
 
   sprintf(str, "Brightness: %u", lightData);
@@ -216,4 +230,17 @@ void showValues() {
 
   sprintf(str, "Time: %02u/%02u/%04u  %02u:%02u:%02u", day, month, year, hour, minute, second);
   Serial.println(str);
+
+  Serial.print("\n");
+}
+
+void buzzer() {
+  tone(BUZZER, 500);
+  delay(300);
+
+  tone(BUZZER, 800);
+  delay(300);
+
+  noTone(BUZZER);
+  buzzerTone = false;
 }
