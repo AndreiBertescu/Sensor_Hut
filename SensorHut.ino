@@ -1,3 +1,4 @@
+#include <LowPower.h>
 //DHT11
 #include <DFRobot_DHT11.h>
 //DS1302 RTC
@@ -18,6 +19,7 @@
 #define BATTERY_SENSOR A3
 #define BUTTON1 3
 #define BUTTON2 2
+#define SWITCH 12
 
 #define CLOCK_RESET 4
 #define BUZZER 5
@@ -25,10 +27,9 @@
 #define MQ9_SENSOR 8
 #define TFT_DC 9
 #define TFT_RST 10
-#define SWITCH 12
+#define TFT_BRT 6
 
-#define ON_TIME 1 * 1000  //not used
-#define OFF_TIME 30 * 1000
+#define OFF_TIME 64  //Amount of seconds: multiple of 8
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
 DFRobot_DHT11 DHT;
@@ -49,17 +50,18 @@ uint8_t second;
 uint8_t minute;
 uint8_t hour;
 unsigned long ellapsedTime;
-bool update, buzzerTone;
+bool update, updateBrt;
 
 void setup() {
   // Serial.begin(9600);
-  update = true;
-  buzzerTone = false;
+  update = false;
+  updateBrt = false;
   ellapsedTime = 0;
 
-  //light sensor & battery
+  //light sensor & battery & TFT_BRT
   pinMode(LIGHT_SENSOR, INPUT);
   pinMode(BATTERY_SENSOR, INPUT);
+  pinMode(TFT_BRT, OUTPUT);
 
   //buttons init
   pinMode(BUTTON1, INPUT_PULLUP);
@@ -80,41 +82,48 @@ void setup() {
 }
 
 void loop() {
-  if (millis() - ellapsedTime >= OFF_TIME) {
-    ellapsedTime = millis();
-    update = true;
-  }
+  digitalWrite(TFT_BRT, HIGH);
 
-  if (!update && !digitalRead(BUTTON2)) {
-    update = true;
+  if (update) {
     tone(BUZZER, 1000);
     delay(60);
     noTone(BUZZER);
+    update = false;
   }
-  if (!buzzerTone && !digitalRead(BUTTON1))
-    buzzerTone = true;
-
-  if (buzzerTone)
+  if (updateBrt)
     buzzer();
 
-  if (update) {
+  if (!updateBrt) {
     updateSensors();
     updateLcd();
     // printValues();
+  } else updateBrt = false;
 
-    update = false;
-  }
+  delay(20);
+  attachInterrupt(0, button1, LOW);
+  attachInterrupt(1, button2, LOW);
 
-  delay(100);
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  digitalWrite(TFT_BRT, LOW);
+  for (int i = 0; i < OFF_TIME / 8 - 1; i++)
+    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+
+  detachInterrupt(1);
+  detachInterrupt(0);
 }
 
 void updateSensors() {
+  digitalWrite(SWITCH, HIGH);
+  delay(2);
+
   batterySensor(battery);
   lightSensor(lightData);
   dhtSensor(temperature, humidity);
   clockModule(day, month, year, second, minute, hour);
   // mq9(gasDanger);
   // bmp280();
+
+  digitalWrite(SWITCH, LOW);
 }
 
 void batterySensor(uint8_t& battery) {
@@ -236,11 +245,21 @@ void printValues() {
 
 void buzzer() {
   tone(BUZZER, 500);
-  delay(300);
+  delay(100);
 
   tone(BUZZER, 800);
-  delay(300);
+  delay(100);
+
+  tone(BUZZER, 1000);
+  delay(100);
 
   noTone(BUZZER);
-  buzzerTone = false;
+}
+
+void button1() {
+  update = true;
+}
+
+void button2() {
+  updateBrt = true;
 }
