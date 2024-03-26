@@ -5,7 +5,6 @@
 #include <ThreeWire.h>
 #include <RtcDS1302.h>
 //BMP280
-#include <Wire.h>
 #include <Adafruit_BMP280.h>
 //LCD
 #include <Adafruit_GFX.h>
@@ -24,12 +23,12 @@
 #define CLOCK_RESET 4
 #define BUZZER 5
 #define DHT_SENSOR 7
-#define MQ9_SENSOR 8
+#define SCK_LIGHT 8
 #define TFT_DC 9
 #define TFT_RST 10
 #define TFT_BRT 6
 
-#define OFF_TIME 64  //Amount of seconds: multiple of 8
+#define OFF_TIME 64  //Amount of seconds: multiple of 8, at least 8;
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
 DFRobot_DHT11 DHT;
@@ -41,8 +40,9 @@ Adafruit_ST7789 tft = Adafruit_ST7789(-1, TFT_DC, TFT_RST);
 uint8_t battery;
 uint16_t lightData;
 bool gasDanger;
-uint8_t temperature;
+uint8_t temperature, temperature_bmp;
 uint8_t humidity;
+uint16_t pressure;
 uint8_t day;
 uint8_t month;
 uint16_t year;
@@ -50,18 +50,21 @@ uint8_t second;
 uint8_t minute;
 uint8_t hour;
 unsigned long ellapsedTime;
-bool update, updateBrt;
+bool update, updateBrt, powerSaver;
 
 void setup() {
   // Serial.begin(9600);
   update = false;
   updateBrt = false;
+  powerSaver = false;
   ellapsedTime = 0;
 
   //light sensor & battery & TFT_BRT
   pinMode(LIGHT_SENSOR, INPUT);
   pinMode(BATTERY_SENSOR, INPUT);
   pinMode(TFT_BRT, OUTPUT);
+  pinMode(SCK_LIGHT, OUTPUT);
+  digitalWrite(SCK_LIGHT, LOW);
 
   //buttons init
   pinMode(BUTTON1, INPUT_PULLUP);
@@ -71,6 +74,14 @@ void setup() {
   pinMode(SWITCH, OUTPUT);
   digitalWrite(SWITCH, HIGH);
   delay(2);
+
+  //bmp280
+  bmp.begin(0x76, 0x58);
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,  /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X16, /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16, /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X8,    /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_1);
 
   //clock
   rtc.Begin();
@@ -90,21 +101,26 @@ void loop() {
     noTone(BUZZER);
     update = false;
   }
-  if (updateBrt)
+  if (updateBrt) {
     buzzer();
+    powerSaver = !powerSaver;
+    digitalWrite(SCK_LIGHT, powerSaver ? HIGH : LOW);
+    updateBrt = false;
+  }
 
-  if (!updateBrt) {
-    updateSensors();
-    updateLcd();
-    // printValues();
-  } else updateBrt = false;
+  digitalWrite(SCK_LIGHT, powerSaver ? LOW : HIGH);
+  updateSensors();
+  // printValues();
+  updateLcd();
+  digitalWrite(SCK_LIGHT, powerSaver ? HIGH : LOW);
 
   delay(20);
   attachInterrupt(0, button1, LOW);
   attachInterrupt(1, button2, LOW);
 
   LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
-  digitalWrite(TFT_BRT, LOW);
+  if (powerSaver)
+    digitalWrite(TFT_BRT, LOW);
   for (int i = 0; i < OFF_TIME / 8 - 1; i++)
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 
@@ -120,8 +136,9 @@ void updateSensors() {
   lightSensor(lightData);
   dhtSensor(temperature, humidity);
   clockModule(day, month, year, second, minute, hour);
-  // mq9(gasDanger);
-  // bmp280();
+  bmp280(temperature_bmp, pressure);
+
+  temperature = (temperature + temperature_bmp) / 2;
 
   digitalWrite(SWITCH, LOW);
 }
@@ -162,22 +179,9 @@ void setClock() {
   rtc.SetDateTime(compiled);
 }
 
-void mq9(bool gasDanger) {
-  gasDanger = !digitalRead(MQ9_SENSOR);
-}
-
-void bmp280() {
-  Serial.print("--- Temperature  = ");
-  Serial.print(bmp.readTemperature());
-  Serial.print(" *C ");
-
-  Serial.print("Pressure = ");
-  Serial.print(bmp.readPressure() / 100);  //displaying the Pressure in hPa, you can change the unit
-  Serial.print("  hPa  ");
-
-  Serial.print("Approx altitude = ");
-  Serial.print(bmp.readAltitude(1019.66));  //The "1019.66" is the pressure(hPa) at sea level in day in your region
-  Serial.println("  m ");                   //If you don't know it, modify it until you get your current  altitude
+void bmp280(uint8_t& temperature_bmp, uint16_t& pressure) {
+  temperature_bmp = static_cast<uint8_t>(bmp.readTemperature());
+  pressure = static_cast<uint16_t>(bmp.readPressure() / 100);
 }
 
 void updateLcd() {
@@ -208,33 +212,48 @@ void updateLcd() {
   //dht11
   tft.setTextSize(3);
   tft.setCursor(10, 130);
-  sprintf(str, "Temp:%dC", temperature);
+  sprintf(str, "T:%dC  H:%d%%", temperature, humidity);
   tft.print(str);
 
+  //bmp280
   tft.setCursor(10, 165);
-  sprintf(str, "Hum:%d%%", humidity);
+  sprintf(str, "Pres: %dhPa", pressure);
   tft.print(str);
 
+  //light sensor
   tft.setCursor(10, 200);
   if (lightData < 200)
     tft.print("Brgt:Dark");
   else if (lightData < 500)
     tft.print("Brgt:Dim");
   else
-    tft.print("Brgt:Bright");
+    tft.print("Brt:Bright");
+
+  //power saving mode
+  tft.setTextSize(1);
+  tft.setCursor(205, 215);
+  if (powerSaver)
+    tft.setTextColor(ST77XX_GREEN);
+  else
+    tft.setTextColor(ST77XX_RED);
+  sprintf(str, "PS:%c", powerSaver ? 'E' : 'D');
+  tft.print(str);
 }
 
 void printValues() {
   char str[60];
   Serial.println();
 
-  sprintf(str, "Battery voltage: %u.%uv  Battery reading: %u", battery / 10 % 10, battery % 10, analogRead(BATTERY_SENSOR));
+  sprintf(str, "Battery voltage: %d.%dv  Battery reading: %d", battery / 10 % 10, battery % 10, analogRead(BATTERY_SENSOR));
   Serial.println(str);
 
-  sprintf(str, "Brightness: %u", lightData);
+  sprintf(str, "Brightness: %d", lightData);
   Serial.println(str);
 
-  sprintf(str, "Temp: %u%% °C Hum: %d", temperature, humidity);
+  sprintf(str, "T:%dC  H:%d%%", temperature, humidity);
+  Serial.println(str);
+
+  sprintf(str, "T_bmp:%dC  Pressure:%dhPa", temperature_bmp, pressure);
   Serial.println(str);
 
   sprintf(str, "Time: %02u/%02u/%04u  %02u:%02u:%02u", day, month, year, hour, minute, second);
