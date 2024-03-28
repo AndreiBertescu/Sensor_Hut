@@ -1,11 +1,16 @@
 # SensorHut
-An Arduino Uno powered sensor array with a rechargable LiPo battery.
-
-<p align="center">
+## Description & Features
+- The SensorHut is an Arduino-powered sensor array that can measure temperature, humidity, barometric pressure, light level, along with a time-keeping feature. It has a 2.4" LCD display that shows all this data (along with the battery voltage and the power-saving mode), with a refresh rate of approximately 1 Hz.
+- <strong>All the sensors are removable</strong>, along with the battery and the power module (including the solar panel, the DC-DC converter, solar controller, and charging module), thus allowing for maintenance and the replacement of defective components.
+- It is powered by a 2000mAh LiPo battery that can be recharged through USB-C or passively through the incorporated solar panel.
+- It also features two push buttons (left and right).
+  - The <strong>right button</strong> is used to refresh the sensor data (thus ignoring the time delay).
+  - The <strong>left button</strong> can be used to enable or disable the <strong>power-saving mode</strong>. This mode disables the attached LED and display backlight for most of the time (it only remains lit for the first 8 seconds after a sensor data refresh).
+    
+<p align="center"><br>
   <img src="https://github.com/AndreiBertescu/SensorHut/assets/126001291/dd75fdbe-2ac5-4cdf-b565-bf0fa5709cc7" width="400" alt="Image 1">
   <img src="https://github.com/AndreiBertescu/SensorHut/assets/126001291/520b7183-37d1-44b8-b051-6cda2a163015" width="400" alt="Image 2">
 </p>
-
 
 ## Components
 - Arduino Uno Rev3
