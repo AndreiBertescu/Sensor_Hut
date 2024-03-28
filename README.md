@@ -47,5 +47,5 @@ Bare frame with all detachable components removed
 Components
 <p align="center">
   <img src="https://github.com/AndreiBertescu/SensorHut/assets/126001291/6f095a60-3a2a-462e-828e-9cf62da795ed" width="400" alt="Image 1">
-  <img src="https://github.com/AndreiBertescu/SensorHut/assets/126001291/20773fd0-5b10-4ed9-9a0b-dbfabeb3b997" width="400" alt="Image 2">
+  <img src="https://github.com/AndreiBertescu/SensorHut/assets/126001291/9341f76c-d073-4718-a8da-f3d14810d1c2" width="400" alt="Image 2">
 </p>
