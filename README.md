@@ -1,8 +1,8 @@
 # SensorHut V2
 
 <p align="center"><br>
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="500" alt="render">
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="500" alt="Image 2">
+  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="450" alt="render">
+  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="450" alt="Image 2">
 </p>
 
 ## Description
