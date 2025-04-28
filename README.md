@@ -1,8 +1,8 @@
 # SensorHut V2
 
 <p align="center"><br>
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="400" alt="render">
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="400" alt="Image 2">
+  <img src="SensorHut_V2/Photos/show_1.jpg" width="400" alt="render">
+  <img src="SensorHut_V2/Photos/show_4.jpg" width="400" alt="Image 2">
 </p>
 
 ## Description
@@ -21,8 +21,8 @@
     - The power pins on the ATMEGA16U2 auxiliary IC, along with the RX and TX LEDs, were rewired to be active only when the board is connected through the USB-B port ([tutorial](https://www.defproc.co.uk/tutorial/how-to-reduce-arduino-uno-power-usage-by-95/)).
  
 <p align="center"><br>
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="350" alt="Image 2">
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="350" alt="Image 2">
+  <img src="SensorHut_V2/Photos/render.png" width="350" alt="Image 2">
+  <img src="SensorHut_V2/Photos/components_1.jpg" width="350" alt="Image 2">
   <br>
   <img src="V2/Photos/Sensor_Hut_3D.gif" width="700" alt="gif">
 </p>
@@ -66,7 +66,7 @@
 ![Schematic1](https://github.com/AndreiBertescu/SensorHut/assets/126001291/dc3ed218-7b95-4bda-ba9b-36e1568e4085)
 
 
-## Other Images
+## Version 1 images
 Bare frame with all detachable components removed 
 <p align="center">
   <img src="https://github.com/AndreiBertescu/SensorHut/assets/126001291/0c8be7b0-a188-4d4c-afc6-682cc39ee0b4" width="400" alt="Image 1">
