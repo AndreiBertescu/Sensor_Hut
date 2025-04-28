@@ -1,8 +1,8 @@
 # SensorHut V2
 
 <p align="center"><br>
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="500" alt="render">
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="500" alt="Image 2">
+  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="400" alt="render">
+  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="400" alt="Image 2">
 </p>
 
 ## Description
@@ -21,8 +21,10 @@
     - The power pins on the ATMEGA16U2 auxiliary IC, along with the RX and TX LEDs, were rewired to be active only when the board is connected through the USB-B port ([tutorial](https://www.defproc.co.uk/tutorial/how-to-reduce-arduino-uno-power-usage-by-95/)).
  
 <p align="center"><br>
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="300" alt="Image 2">
-  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="300" alt="Image 2">
+  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="350" alt="Image 2">
+  <img src="https://github.com/user-attachments/assets/40d12303-b0a0-46a4-97ea-b4b78551137f" width="350" alt="Image 2">
+  <br>
+  <img src="V2/Photos/Sensor_Hut_3D.gif" width="700" alt="gif">
 </p>
 
 ## Improvements added in version 2
@@ -33,13 +35,6 @@
 - The power delivery circuits were removed from the solar panle and placed on a dedicated frame on the top of the hut.
 - The SensorHut cand now be functional  entirelly without the solar panel, since in the first version it didn't actually charge very much.
 - The wire harness was greatelly simplified from the "spiderweb". Wires were placed on the left and right sides of the hut, and can be easely be removed by dethaching the right-angle pin headers from the Arduino's sockets.
-
-<div align="center">
-  <video autoplay loop muted playsinline>
-    <source src="https://github.com////////////////////////////////////////////////" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
 
 
 ## Bill of materials
@@ -64,7 +59,6 @@
 - SPDT switch
 - 30x1mm steel wires (for 2x clamps)
 - Popsicle sticks for the frame
-
 
 
 ## Version 1 schematic
