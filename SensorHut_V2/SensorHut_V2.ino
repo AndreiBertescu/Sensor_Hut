@@ -308,7 +308,8 @@ void startupRoutine() {
     "/\\/\\\\//\\\\\\",
     "\\/\\\\/\\/\\\\\\"
   };
-  
+
+  digitalWrite(LED_PIN, HIGH);
   lcd.fillScreen(ST77XX_RED);
   lcd.setTextColor(ST77XX_BLACK);
   lcd.setTextSize(4);
@@ -342,6 +343,7 @@ void startupRoutine() {
   tone(6, 587); delay(108); // NOTE_D5
   noTone(6);
 
+  digitalWrite(LED_PIN, LOW);
   delay(500);
 }
 
