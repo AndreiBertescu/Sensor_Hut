@@ -7,7 +7,7 @@
 
 #define ENABLE_SERIAL false
 #define TIME_ALIVE 16000            // Rounds up to multiples of 4000
-#define TIME_SHORT_SLEEP 60000 * 1  // Rounds up to multiples of 4000
+#define TIME_SHORT_SLEEP 60000 * 10 // Rounds up to multiples of 4000
 #define TIME_LONG_SLEEP 60000 * 10  // Rounds up to multiples of 4000
 
 #define DHT_PIN 4
@@ -240,30 +240,44 @@ void handleDS1302() {
 
 void handleLCD() {
   char str[20];
+  int text_color = 0;
 
   lcd.setTextSize(2);
   if (power_saving_mode) {
-    lcd.setTextColor(ST77XX_RED);
+    text_color = ST77XX_RED;
     lcd.fillScreen(ST77XX_BLACK);
   } else {
     if (light_snsr_val <= 50) {
-      lcd.setTextColor(ST77XX_WHITE);
+      text_color = ST77XX_WHITE;
       lcd.fillScreen(ST77XX_BLACK);
     } else {
-      lcd.setTextColor(ST77XX_BLACK);
+      text_color = ST77XX_BLACK;
       lcd.fillScreen(ST77XX_WHITE);
     }
   }
+  lcd.setTextColor(text_color);
 
   // Battery
   lcd.setCursor(172, 10);
+  if(batt_snsr_val < 320) {
+    lcd.setTextColor(ST77XX_RED);
+  } else if(batt_snsr_val < 370) {
+    lcd.setTextColor(ST77XX_ORANGE);
+  }
   sprintf(str, "%d.%.2dv", batt_snsr_val / 100 % 10, batt_snsr_val % 100);
   lcd.print(str);
 
   // Date
   lcd.setCursor(10, 10);
-  sprintf(str, "%02u/%02u/%04u", t.date, t.mon, t.yr);
+  if(t.yr <= 2000 || t.yr >= 2100) {
+    sprintf(str, "RTC ERROR");
+    lcd.setTextColor(ST77XX_ORANGE);
+  } else {
+    sprintf(str, "%02u/%02u/%04u", t.date, t.mon, t.yr);
+    lcd.setTextColor(text_color);
+  }
   lcd.print(str);
+  lcd.setTextColor(text_color);
 
   // Time
   lcd.setTextSize(7);
