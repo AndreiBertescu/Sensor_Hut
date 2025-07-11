@@ -59,7 +59,7 @@ Adafruit_ST7789 lcd = Adafruit_ST7789(-1, LCD_DC, LCD_RST);
 
 // Other
 char buf[64];
-bool power_saving_mode = false;
+int power_saving_mode = 0;
 
 void setup() {
   // Pin initialization
@@ -123,7 +123,8 @@ void loop() {
     Serial.println();
   }
 
-  digitalWrite(LCD_BRT, HIGH);
+  if(power_saving_mode != 2 || (btn_1_pressed || btn_2_pressed))
+    digitalWrite(LCD_BRT, HIGH);
 
   handleButtons();
   handleBATT_SNSR();
@@ -137,19 +138,19 @@ void loop() {
   digitalWrite(LCD_BRT, LOW);
   digitalWrite(LED_PIN, LOW);
 
-  sleepFor(power_saving_mode ? TIME_LONG_SLEEP : TIME_SHORT_SLEEP);  // ~11mA less power usage than delay function
+  sleepFor(power_saving_mode == 1 ? TIME_LONG_SLEEP : TIME_SHORT_SLEEP);  // ~11mA less power usage than delay function
   // delay(1000);
 }
 
 void handleButtons() {
   if (btn_1_pressed) {
     activateBuzzer(1);
-    power_saving_mode = !power_saving_mode;
+    power_saving_mode = (power_saving_mode + 1) % 3;
 
     btn_1_pressed = false;
   }
   if (btn_2_pressed) {
-    if (!power_saving_mode) {
+    if (power_saving_mode == 0) {
       activateBuzzer(2);
     } else {
       delay(500);
@@ -158,7 +159,7 @@ void handleButtons() {
     btn_2_pressed = false;
   }
 
-  if (!power_saving_mode) {
+  if (power_saving_mode == 0) {
     digitalWrite(LED_PIN, HIGH);
   }
 }
@@ -243,8 +244,8 @@ void handleLCD() {
   int text_color = 0;
 
   lcd.setTextSize(2);
-  if (power_saving_mode) {
-    text_color = ST77XX_RED;
+  if (power_saving_mode != 0) {
+    text_color = (power_saving_mode == 1) ? ST77XX_RED : ST77XX_MAGENTA;
     lcd.fillScreen(ST77XX_BLACK);
   } else {
     if (light_snsr_val <= 50) {
@@ -304,7 +305,7 @@ void handleLCD() {
   // Power saving mode
   lcd.setTextSize(1);
   lcd.setCursor(205, 215);
-  sprintf(str, "PS:%c", power_saving_mode ? 'Y' : 'N');
+  sprintf(str, "PS:%u", power_saving_mode);
   lcd.print(str);
 }
 
